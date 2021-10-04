@@ -142,42 +142,6 @@ if(NOT HAVE_FSEEKO)
     list(APPEND STDLIB_DEF -DNO_FSEEKO)
 endif()
 
-# Checkout remote repository
-macro(clone_repo name url)
-    if(NOT ${name}_REPOSITORY)
-        set(${name}_REPOSITORY ${url})
-    endif()
-    if(NOT ${name}_TAG)
-        set(${name}_TAG master)
-    endif()
-
-    message(STATUS "Fetching ${name} ${${name}_REPOSITORY} ${${name}_TAG}")
-
-    # Check for FetchContent cmake support
-    if(${CMAKE_VERSION} VERSION_LESS "3.11")
-        message(FATAL_ERROR "CMake 3.11 required to fetch ${name}")
-    else()
-        include(FetchContent)
-
-        string(TOLOWER ${name} name_lower)
-        string(TOUPPER ${name} name_upper)
-
-        FetchContent_Declare(${name}
-            GIT_REPOSITORY ${${name}_REPOSITORY}
-            GIT_TAG ${${name}_TAG}
-            SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/${name_lower})
-
-        FetchContent_GetProperties(${name} POPULATED ${name_lower}_POPULATED)
-
-        if(NOT ${name_lower}_POPULATED)
-            FetchContent_Populate(${name})
-        endif()
-
-        set(${name_upper}_SOURCE_DIR ${${name_lower}_SOURCE_DIR})
-        set(${name_upper}_BINARY_DIR ${${name_lower}_BINARY_DIR})
-    endif()
-endmacro()
-
 if(MZ_LIBCOMP)
     if(APPLE)
         # Use Apple libcompression
@@ -211,13 +175,13 @@ if(MZ_ZLIB)
 
         set(PC_PRIVATE_LIBS " -lz")
     elseif(MZ_FETCH_LIBS)
-        clone_repo(zlib https://github.com/madler/zlib)
+        CPMAddPackage(
+            NAME zlib
+            GITHUB_REPOSITORY "madler/zlib"
+        )
 
-        # Don't automatically add all targets to the solution
-        add_subdirectory(${ZLIB_SOURCE_DIR} ${ZLIB_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-        list(APPEND MINIZIP_INC ${ZLIB_SOURCE_DIR})
-        list(APPEND MINIZIP_INC ${ZLIB_BINARY_DIR})
+        list(APPEND MINIZIP_INC ${zlib_SOURCE_DIR})
+        list(APPEND MINIZIP_INC ${zlib_BINARY_DIR})
 
         # Have to add zlib to install targets
         if(NOT DEFINED BUILD_SHARED_LIBS OR NOT ${BUILD_SHARED_LIBS})
