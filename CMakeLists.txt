@@ -178,6 +178,7 @@ if(MZ_ZLIB)
         CPMAddPackage(
             NAME zlib
             GITHUB_REPOSITORY "madler/zlib"
+            GIT_TAG master
         )
 
         list(APPEND MINIZIP_INC ${zlib_SOURCE_DIR})
